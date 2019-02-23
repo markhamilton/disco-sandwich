@@ -1,0 +1,13 @@
+auth.json
+data.db
+node_modules/
+.DS_Store
+._*
+output/
+build/
+deps/
+
+.fuse_hidden*
+
+assets/src
+

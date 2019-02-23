@@ -1,0 +1,16 @@
+{
+  "name": "sandwichbot",
+  "version": "0.1.0",
+  "description": "A bot what makes sandwiches",
+  "main": "bot.js",
+  "author": "Mark",
+  "dependencies": {
+    "bindings": "^1.4.0",
+    "discord.io": "^2.5.3",
+    "nan": "^2.12.1",
+    "winston": "^3.2.1"
+  },
+  "nodemonConfig": {
+	  "ignore": ["*.db"]
+  }
+}

@@ -1,0 +1,27 @@
+{
+	"Standard Cheeseburger": [
+		"bread",
+		"cheese",
+		"topping",
+		"meat",
+		"bread"
+	],
+	"Standard Hamburger": [
+		"bread",
+		"topping",
+		"meat",
+		"bread"
+	],
+	"Open Faced": [
+		"rtopping",
+		"rtopping",
+		"rtopping",
+		"meat",
+		"bread"
+	],
+	"Sadwich": [
+		"bread",
+		"meat",
+		"bread"
+	]
+}
