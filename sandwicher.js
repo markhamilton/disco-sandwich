@@ -57,7 +57,7 @@ function Sandwicher() {
 						 this.width *  20.0, this.height *  20.0);
 
 			ctx.resetTransform();
-		};
+		}
 
 	}
 
@@ -127,7 +127,7 @@ function Sandwicher() {
 			}
 
 			ctx.resetTransform();
-		};
+		}
 	}
 
 	class toppingMatch extends topping {
