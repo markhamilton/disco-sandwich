@@ -174,6 +174,7 @@ function myWords(userID, channelID, userName) {
 }
 
 function invokeSandwicher(userID, channelID, user) {
+
 	const simfile = uniqueFilename('./output', 'simulation') + ".gif";
 	console.log(simfile, "simulating sandwich for " + user);
 
@@ -183,21 +184,27 @@ function invokeSandwicher(userID, channelID, user) {
 		"Just sit back and relax, I'm on it!"
 	];
 	
-	sendAsyncMessage(channelID, holdplease[Math.floor(Math.random() * holdplease.length)]);
+	// FIXME: discord.io doesn't send the API requests through until this whole thing finishes
+	// even though it's using promises. I don't understand promises enough atm.
+
+	// sendAsyncMessage(channelID, holdplease[Math.floor(Math.random() * holdplease.length)]);
 
 	var simulate = require("./sandwicher.js");
 	simulate(user, bot).then((data_buf) => {
 		console.log("simulation complete. uploading");
 
+		// XXX: Something here is causing a deprecation warning
 		fs.writeFile(simfile, data_buf, function (err) {
 			bot.uploadFile({
 				to:channelID,
 				file:simfile
+			}, function() {
+				console.log("upload complete. unlinking.");
+				fs.unlink(simfile);
 			});
 		});
-
 	});
-	
+
 }
 
 function makeSandwich(userID, channelID) {

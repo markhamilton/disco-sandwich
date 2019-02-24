@@ -29,6 +29,8 @@ Remember to save an auth.json file with your credentials in it like this:
 
 Edit the json files under `data/` to change the structure of the sandwich or add more ingredients.
 
+The sandwich simulations get dumped in the `output/` folder but it should clean up after the file is uploaded.
+
 
 ## requirements
 
