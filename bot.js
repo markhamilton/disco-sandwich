@@ -1,11 +1,13 @@
-var Discord = require("discord.io");
-var logger = require('winston');
-var auth = require('./auth.json');
+'use strict';
 
-var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database("./data.db");
+const Discord 			= require("discord.io");
+const logger 			= require('winston');
+const auth 				= require('./auth.json');
+const fs 				= require('fs');
+const uniqueFilename    = require("unique-filename");
 
-const uniqueFilename = require("unique-filename");
+const sqlite3 			= require('sqlite3').verbose();
+var db 	= new sqlite3.Database("./data.db");
 
 logger.remove(logger.transports.Console);
 logger.add(new logger.transports.Console, {colorize:true});
@@ -20,8 +22,6 @@ var toppings = require("./data/toppings.json");
 var cheeses = require("./data/cheeses.json");
 var meats = require("./data/meats.json");
 
-// for testing integration
-//toppings = ['!egg'];
 
 var bot = new Discord.Client({
 	token:auth.token,
@@ -174,23 +174,34 @@ function myWords(userID, channelID, userName) {
 }
 
 function invokeSandwicher(userID, channelID, user) {
-	console.log("simulating sandwich for " + user);
-	var Sandwicher = require("./sandwicher.js");
-	var simfile = uniqueFilename('./output', 'simulation') + ".gif";
+	const simfile = uniqueFilename('./output', 'simulation') + ".gif";
+	console.log(simfile, "simulating sandwich for " + user);
 
-	s = new Sandwicher();
-	s.simulate(simfile, user);
+	const holdplease = [
+		"Please hang tight while I whip you up a mean sandwich!",
+		"I'm on it!",
+		"Just sit back and relax, I'm on it!"
+	];
+	
+	sendAsyncMessage(channelID, holdplease[Math.floor(Math.random() * holdplease.length)]);
 
-	setTimeout(function() {
-		bot.uploadFile({
-			to:channelID,
-			file:simfile
+	var simulate = require("./sandwicher.js");
+	simulate(user, bot).then((data_buf) => {
+		console.log("simulation complete. uploading");
+
+		fs.writeFile(simfile, data_buf, function (err) {
+			bot.uploadFile({
+				to:channelID,
+				file:simfile
+			});
 		});
-	}, 200);
+
+	});
+	
 }
 
 function makeSandwich(userID, channelID) {
-	keys = Object.keys(meta);
+	var keys = Object.keys(meta);
 	var s_meta = meta[keys[Math.floor(keys.length * Math.random())]];
 
 	var random_thing = function( thing ) { return thing[Math.floor(Math.random() * thing.length)]; }
@@ -202,7 +213,7 @@ function makeSandwich(userID, channelID) {
 
 	var sandwich = '';
 
-	for(ii = 0; ii < s_meta.length; ii++) {
+	for(var ii = 0; ii < s_meta.length; ii++) {
 		if (ii != 0) sandwich += "\n";
 		switch(s_meta[ii]) {
 			case 'bread': sandwich += s_bread; break;
@@ -222,7 +233,7 @@ function makeSandwich(userID, channelID) {
 
 function giveHelp(userID, channelID) {
 
-	embedcontent = {
+	var embedcontent = {
 		color: 8388736,
 		title: "Sandwich Bot Help",
 		description: "Hello, I am Sandwich Bot, the friendly chef!\n"+
