@@ -5,6 +5,15 @@ const b2d = require('box2d');
 const Canvas = require('canvas');
 global.Image = Canvas.Image;
 
+const bodyTypes = {
+    RECT: 'rect',
+    CIRCLE: 'circle',
+    // to be implemented
+    ROPE: 'rope',
+    MESH: 'mesh'
+};
+
+
 class topping {
     constructor() { }
     render(ctx, debug=false) { return false; }

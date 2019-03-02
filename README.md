@@ -41,7 +41,6 @@ The sandwich simulations get dumped in the `output/` folder but it should clean 
  - gifencoder
  - winston
  - sqlite3
- - unique-filename
 
 
 

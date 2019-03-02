@@ -44,7 +44,6 @@ class ParticleSystem {
 
     update(framedelta) {
         for(var f_i = 0; f_i < framedelta; ++f_i) {
-            // TODO: particles deflect each other on distance <= 0
 
             // parts
             for(var p_i = this.__particles.length-1; p_i >= 0; --p_i) {
@@ -55,6 +54,7 @@ class ParticleSystem {
                 this.__particles[p_i].position.x += this.__particles[p_i].gravity.x;
                 this.__particles[p_i].position.y += this.__particles[p_i].gravity.y;
                 // TODO: Brownian motion
+                // TODO: particles deflect each other on distance <= 0
             }
 
             // emits

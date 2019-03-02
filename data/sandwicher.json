@@ -26,18 +26,53 @@
 			"bread"
 		]
     },
-    "toppings" : [
-        "tomato",
-		"cheese",
-		"lettuce",
-        "american cheese",
-        "demonic sigil"
-    ],
-    "breads" : [
-        "bun"
-    ],
-    "meats" : [
-        "hamburger"
-	]
+    "toppings" : {
+        "Tomato" : {
+            "body_type" : "rect",
+            "color" 	: "#EC391B",
+            "width" 	: 1.5,
+            "height" 	: 0.5
+        },
+		"Lettuce" : {
+            "body_type" : "rect",
+            "color" 	: "#90B04C",
+            "width" 	: 2.8,
+            "height" 	: 0.4
+        },
+        "American Cheese" : {
+            "body_type" : "rect",
+            "color" 	: "#FAC832",
+            "width" 	: 2.8,
+            "height" 	: 0.4
+        },
+        "Demonic Sigil" : {
+            "body_type" : "circle",
+            "radius" 	: 2.0,
+            "image" 	: "./assets/doom_sigil.png"
+        }
+	},
+    "breads" : {
+        "Bun" : {
+            "body_type" : "rect",
+            "color" 	: "#E9A046",
+            "width"		: 3.0,
+            "height"	: 1.0
+        }
+	},
+    "meats" : {
+        "Hamburger" : {
+            "body_type" : "rect",
+            "color" 	: "#684023",
+            "width" 	: 2.8,
+            "height" 	: 0.8
+        },
+        "Spinning Think Emoji" : {
+            "body_type" : "circle",
+            "radius" 	: 1.5,
+			"frame_pre" : "./assets/think_",
+			"frame_post": ".png",
+			"framespeed": 1,
+			"framecount": 30
+        }
+	}
 }
-
