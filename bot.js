@@ -3,8 +3,6 @@
 const Discord 			= require("discord.io");
 const logger 			= require('winston');
 const auth 				= require('./auth.json');
-const fs 				= require('fs');
-const uniqueFilename    = require("unique-filename");
 
 const sqlite3 			= require('sqlite3').verbose();
 var db 	= new sqlite3.Database("./data.db");
@@ -174,9 +172,7 @@ function myWords(userID, channelID, userName) {
 }
 
 function invokeSandwicher(userID, channelID, user) {
-
-	const simfile = uniqueFilename('./output', 'simulation') + ".gif";
-	console.log(simfile, "simulating sandwich for " + user);
+	console.log("simulating sandwich for " + user);
 
 	const holdplease = [
 		"Please hang tight while I whip you up a mean sandwich!",
@@ -193,15 +189,10 @@ function invokeSandwicher(userID, channelID, user) {
 	simulate(user, bot).then((data_buf) => {
 		console.log("simulation complete. uploading");
 
-		// XXX: Something here is causing a deprecation warning
-		fs.writeFile(simfile, data_buf, function (err) {
-			bot.uploadFile({
-				to:channelID,
-				file:simfile
-			}, function() {
-				console.log("upload complete. unlinking.");
-				fs.unlink(simfile);
-			});
+		bot.uploadFile({
+			to:channelID,
+			file:data_buf,
+			filename:"simulation.gif"
 		});
 	});
 
