@@ -35,7 +35,7 @@ The sandwich simulations get dumped in the `output/` folder but it should clean 
 ## requirements
 
  - node
- - discord.io
+ - discord.js
  - node-canvas
  - node-box2d
  - gifencoder
@@ -46,6 +46,6 @@ The sandwich simulations get dumped in the `output/` folder but it should clean 
 
 ## contributing
 
-If you submit pull requests for nitpicky things I will reject them and send you a middle finger emoji via email.
+Do whatever you want man.
 
 More features and docs coming soon.
