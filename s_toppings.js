@@ -70,9 +70,8 @@ class toppingCircle extends topping {
         this.radius = radius;
         this.color = color;
         this.image_url = image_url;
-        this.image = null;
-
-        this.__inited = false;
+        this.frames = [];
+        this.frameIndex = 0;
 
         // Dynamic Body & initial factors
         var bodyDef = new b2d.b2BodyDef();;
@@ -89,24 +88,26 @@ class toppingCircle extends topping {
         
         this.body.SetLinearVelocity(new b2d.b2Vec2(Math.random() * 20.0 - 10, Math.random() * 20 - 10));
         this.body.SetAngularVelocity((Math.random() * 80.0 - 40.0) * Math.PI / 180.0);
+
+        this.__initData();
     }
 
     __initData() {
-        if(this.__inited) return;
-
         if(typeof this.image_url !== 'undefined') {
-            var img_data = fs.readFileSync(this.image_url);
-            var img_b64 = new Buffer(img_data, 'binary').toString('base64');
+            if(!Array.isArray(this.image_url)) this.image_url = [this.image_url];
 
-            this.image = new Image();
-            this.image.src = "data:image/png;base64," + img_b64;
+            this.image_url.forEach((element) => {
+                var img_data = fs.readFileSync(element);
+                var img_b64 = new Buffer(img_data, 'binary').toString('base64');
+    
+                var frame = new Image();
+                frame.src = "data:image/png;base64," + img_b64;
+                this.frames.push(frame);
+            });
         }
-
-        this.__inited = true;
     }
 
     render(ctx, debug=false) {
-        this.__initData();
 
         // TODO: debug wireframe
 
@@ -119,13 +120,14 @@ class toppingCircle extends topping {
         ctx.rotate(angle);
         ctx.fillStyle = this.color;
 
-        if (this.image == null) {
+        if (this.frames.length == 0) {
             ctx.beginPath();
             ctx.arc(0, 0, this.radius * 20.0, 0, Math.PI * 2, true);
             ctx.fillStyle = this.color;
             ctx.fill();
         } else {
-            ctx.drawImage(this.image, -(this.radius*20), -(this.radius*20));
+            ctx.drawImage(this.frames[this.frameIndex], -(this.radius*20), -(this.radius*20));
+            this.frameIndex = (this.frameIndex + 1) % this.frames.length;
         }
 
         ctx.resetTransform();

@@ -58,13 +58,13 @@ function deleteWord(message, word) {
 		if( typeof row === 'undefined' ) {
 			message.channel.send("I cannot find that word.");
 		} else {
-			if(row.owner == message.author) {
+			if(row.owner == message.author.id) {
 				var stmt = db.prepare("DELETE FROM words WHERE word=? COLLATE NOCASE");
 				stmt.run(word);
 				console.log("Deleted word:" + word);
 				message.channel.send("Deleted!");
 			} else {
-				console.log("Perm error:<" + userID + "> doesn't own:" + word);
+				console.log("Perm error:<" + message.author.id + "> doesn't own:" + word);
 				message.channel.send("Sorry, you can only delete words you've added.");
 			}
 		}
@@ -89,7 +89,7 @@ function addWord(message, word) {
 	db.get("SELECT * FROM words WHERE word=? COLLATE NOCASE", [word], (err, row) => {
 		if( typeof row === 'undefined' ) {
 			var stmt = db.prepare("INSERT INTO words VALUES (?,?,?)");
-			stmt.run(word,userID,+new Date());
+			stmt.run(word,message.author.id,+new Date());
 			console.log("Added word to database:" + word);
 			message.channel.send("Added!");
 		} else {
@@ -125,9 +125,9 @@ function listWords(message) {
 }
 
 function myWords(message) {
-	words = "";
+	var words = "";
 
-	db.all("SELECT * FROM words WHERE owner=? ORDER BY timestamp DESC LIMIT 10 OFFSET 0", [userID], (err, rows) => {
+	db.all("SELECT * FROM words WHERE owner=? ORDER BY timestamp DESC LIMIT 10 OFFSET 0", [message.author.id], (err, rows) => {
 		if(rows && rows.length > 0) {
 
 			rows.forEach((row) => {
@@ -136,7 +136,7 @@ function myWords(message) {
 			});
 
 			const embed = new Discord.RichEmbed()
-				.setTitle(message.author + "'s Word List")
+				.setTitle(message.author.username + "'s Word List")
 				.setColor(0x00AE86)
 				.addField("Latest Ten", words)
 				.setFooter("🥪")

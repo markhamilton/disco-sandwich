@@ -130,8 +130,18 @@ function generateSandwich(world) {
 
     // TODO: parse sandwich meta and generate toppings from them dynamically
 
+    var thinkframes = [];
+    for(var ii = 1; ii <= 30; ++ii) { thinkframes.push('./assets/frames/think' + ii.toString().padStart(2, '0') + '.png'); }
+
     return [
-        new toppingCircle(world, 2.0, '#ff0000', './assets/doom sigil.png'), // demonic circle
+        new toppingCircle(world, 2.0, '', './assets/doom sigil.png'), // demonic circle
+        new toppingCircle(world, 2.0, '', './assets/doom sigil.png'), // demonic circle
+        new toppingCircle(world, 1.0, '', thinkframes), // think emoji
+        new toppingCircle(world, 1.0, '', thinkframes), // think emoji
+        new toppingCircle(world, 1.0, '', thinkframes), // think emoji
+        new toppingCircle(world, 1.0, '', thinkframes), // think emoji
+        new toppingCircle(world, 1.0, '', thinkframes), // think emoji
+        new toppingCircle(world, 1.0, '', thinkframes), // think emoji
         new toppingRectangle(world, 3.0, 1.0, '#E9A046'), // bun
         new toppingRectangle(world, 3.0, 1.0, '#E9A046'), // bun
         new toppingRectangle(world, 2.8, 0.4, '#FAC832'), // cheese
