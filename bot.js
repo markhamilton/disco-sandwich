@@ -166,7 +166,8 @@ function invokeSandwicher(message) {
 		simulate(message.author.username).then((data_buf) => {
 			console.log("simulation complete. uploading");
 			msg.delete();
-			message.channel.send(`Here is your sandwich, ${message.author}`, {files: [data_buf]}).then((message) => {
+
+			message.channel.send(`Here is your sandwich, ${message.author}`, {files: [ { attachment:data_buf, name:"simulation.gif" } ], }).then((message) => {
 				const bread_emoji = client.emojis.find(emoji => emoji.name === "bread");
 				message.react("🍞");
 			});
