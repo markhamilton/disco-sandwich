@@ -5,6 +5,9 @@ const logger = require('winston');
 const auth = require('./auth.json');
 const fs = require('fs');
 
+var workerpool = require('workerpool');
+var pool = workerpool.pool('./sandwicher.js');
+
 const sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database("./data.db");
 
@@ -150,25 +153,22 @@ function myWords(message) {
 }
 
 function invokeSandwicher(message) {
-	console.log("simulating sandwich for " + message.author.username);
-
 	const holdplease = [
 		"Please hang tight while I whip you up a mean sandwich!",
 		"I'm on it!",
-		"Just sit back and relax, I'm on it!"
+		"Just sit back and relax, I'm on it!",
+		"SANDWICH IN PROGRESS..."
 	];
 	
-	// FIXME: discord.io doesn't send the API requests through until this whole thing finishes
-	// even though it's using promises. I don't understand promises enough atm.
-
-	message.channel.send(holdplease[Math.floor(Math.random() * holdplease.length)]).then((msg) => {
-		var simulate = require("./sandwicher.js");
-		simulate(message.author.username).then((data_buf) => {
+	// send invocation message
+	message.channel.send(holdplease[Math.floor(Math.random() * holdplease.length)]).then( (msg) => {
+		// simulate
+		pool.exec('simulate', [message.author.username]).then( (data_buf) => {
 			console.log("simulation complete. uploading");
 			msg.delete();
 
-			message.channel.send(`Here is your sandwich, ${message.author}`, {files: [ { attachment:data_buf, name:"simulation.gif" } ], }).then((message) => {
-				const bread_emoji = client.emojis.find(emoji => emoji.name === "bread");
+			// XXX: Not sure why I have to rewrap the file data in a new buffer
+			message.channel.send(`Here is your sandwich, ${message.author}`, {files: [ { attachment: Buffer.from(data_buf), name:"simulation.gif" } ], }).then((message) => {
 				message.react("🍞");
 			});
 		});

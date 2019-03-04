@@ -2,6 +2,7 @@
 
 const b2d 				= require('box2d');
 const GIFEncoder 		= require('gifencoder');
+const workerpool        = require('workerpool');
 const { createCanvas }  = require('canvas');
 
 const { toppingRectangle, toppingCircle, toppingMatch } = require('./s_toppings');
@@ -136,7 +137,6 @@ function generateSandwich(world) {
     var saturnframes = [];
     for(var ii = 1; ii <= 15; ++ii) { saturnframes.push('./assets/frames/saturn' + ii.toString().padStart(2, '0') + '.png'); }
 
-
     return [
         new toppingCircle(world, 2.0, '', './assets/doom sigil.png'), // demonic circle
         new toppingCircle(world, 2.0, '', './assets/doom sigil.png'), // demonic circle
@@ -173,71 +173,69 @@ function generateSandwich(world) {
 
 }
 
-function simulate(user, bot) {
-    return new Promise(function(resolve, reject) {    
-        const canvas = createCanvas(400,400);
-        const encoder = new GIFEncoder(400, 400);
+function simulate(username) {
+    const canvas = createCanvas(400,400);
+    const encoder = new GIFEncoder(400, 400);
 
-        console.log("starting sandwich for " + user);
+    console.log("starting sandwich for " + username);
 
-        var world = generateWorld();	
-        var sandwichparts = generateSandwich(world);
+    var world = generateWorld();	
+    var sandwichparts = generateSandwich(world);
+    
+    // set up gfx
+    encoder.start();
+    encoder.setRepeat(0);
+    encoder.setDelay(1.0/60*1000);
+    encoder.setQuality(10);
+
+    const ctx=canvas.getContext('2d');
+
+    // Run Simulation!
+    var timeStep = 1.0 / 30.0;
+    var iterations = 100;
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.conf="30px Verdana";
+    
+    console.log("processing frames...");
+    for (var ii=0; ii < 120; ++ii) {
+
+        ctx.resetTransform();
+        // clear fb
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 400, 400);
+
+        // watermark
+        ctx.fillStyle = '#d0d0d0';
+        var watermark = "Sandwich made special for " + username;
+        var lines = getLines(ctx, watermark, 180 );
+        ctx.textAlign = "center";
+        ctx.fillStyle = '#303030';
+
         
-        // set up gfx
-        encoder.start();
-        encoder.setRepeat(0);
-        encoder.setDelay(1.0/60*1000);
-        encoder.setQuality(10);
+        ctx.fillText(lines.join("\n"), 100, 15);
+        // var ingredients_list = "\nBun\nLettuce\nTomato\nTomato\nBun";
+        // ctx.textAlign = "left";
+        // ctx.fillText(ingredients_list, 10, 20);
+        // ctx.fillText(i+": <"+Math.round(position.x)+", "+Math.round(position.y)+"> @"+Math.round(angle*180/Math.PI), 0, 20);
 
-        const ctx=canvas.getContext('2d');
+        world.Step(timeStep, iterations);
 
-        // Run Simulation!
-        var timeStep = 1.0 / 30.0;
-        var iterations = 100;
-
-        ctx.imageSmoothingEnabled = false;
-        ctx.conf="30px Verdana";
-        
-        process.stdout.write("frame: ");
-        for (var ii=0; ii < 120; ++ii) {
-
-            ctx.resetTransform();
-            // clear fb
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, 400, 400);
-
-            // watermark
-            ctx.fillStyle = '#d0d0d0';
-            var watermark = "Sandwich made special for " + user;
-            var lines = getLines(ctx, watermark, 180 );
-            ctx.textAlign = "center";
-            ctx.fillStyle = '#303030';
-
-            
-            ctx.fillText(lines.join("\n"), 100, 15);
-            // var ingredients_list = "\nBun\nLettuce\nTomato\nTomato\nBun";
-            // ctx.textAlign = "left";
-            // ctx.fillText(ingredients_list, 10, 20);
-            // ctx.fillText(i+": <"+Math.round(position.x)+", "+Math.round(position.y)+"> @"+Math.round(angle*180/Math.PI), 0, 20);
-
-            world.Step(timeStep, iterations);
-
-            for(var bi = 0; bi < sandwichparts.length; bi++ ) {
-                sandwichparts[bi].render(ctx);
-            }
-
-            encoder.addFrame(ctx);
-            process.stdout.write(ii + ",");
+        for(var bi = 0; bi < sandwichparts.length; bi++ ) {
+            sandwichparts[bi].render(ctx);
         }
-        encoder.finish();
-        console.log("done");
-        resolve(encoder.out.getData());
-    });
-}
-  
-module.exports = simulate;
 
-if(!module.parent) {
-    var s = module.exports;
-	s("UNKNOWN");
+        encoder.addFrame(ctx);
+        // process.stdout.write(ii + ",");
+        if(ii == 30) console.log("...25% done");
+        if(ii == 60) console.log("...50% done");
+        if(ii == 90) console.log("...75% done");
+    }
+    encoder.finish();
+    console.log("done");
+    return encoder.out.getData();
 }
+
+workerpool.worker({
+    simulate: simulate
+});
