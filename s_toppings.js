@@ -64,14 +64,17 @@ class toppingRectangle extends topping {
 }
 
 class toppingCircle extends topping {
-    constructor(world, radius, color, image_url) {
+    constructor(world, radius, color, image_url, framespeed = 1) {
         super();
 
         this.radius = radius;
         this.color = color;
         this.image_url = image_url;
         this.frames = [];
-        this.frameIndex = 0;
+        this.frameindex = 0;
+        this.framespeed = framespeed;
+
+        this.subframeindex = 0;
 
         // Dynamic Body & initial factors
         var bodyDef = new b2d.b2BodyDef();;
@@ -126,8 +129,13 @@ class toppingCircle extends topping {
             ctx.fillStyle = this.color;
             ctx.fill();
         } else {
-            ctx.drawImage(this.frames[this.frameIndex], -(this.radius*20), -(this.radius*20));
-            this.frameIndex = (this.frameIndex + 1) % this.frames.length;
+            ctx.drawImage(this.frames[this.frameindex], -(this.radius*20), -(this.radius*20));
+
+            this.subframeindex++;
+            if(this.subframeindex == this.framespeed) {
+                this.frameindex = (this.frameindex + 1) % this.frames.length;
+                this.subframeindex = 0;
+            }
         }
 
         ctx.resetTransform();
