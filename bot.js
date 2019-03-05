@@ -51,7 +51,7 @@ const client = new Discord.Client();
 function nutAdd(message) {
 	var stmt = db.prepare("INSERT INTO nutted VALUES (?,?)");
 	stmt.run(message.author.id,+new Date());
-	message.channel.send("Nice work. Type `!nut stats` for more info.");
+	message.react("💦");
 }
 
 function nutStats(message) {
@@ -75,13 +75,13 @@ function nutStats(message) {
 			});
 
 			const embed = new Discord.RichEmbed()
-				.setTitle("Nut Count")
-				.setDescription(`You have nut **${total_count}** times total.`)
+				.setTitle("Nut Statistics")
+				.setDescription(`You nutted **${total_count}** times total.`)
 				.setColor(0xFFFFFF)
-				.addField("Detailed Stats",
+				.addField("Details",
 							`Today: **${day_count}**\n`+
-							`Current month: **${month_count}**\n`+
-							`Current year: **${year_count}**`)
+							`Monthly: **${month_count}**\n`+
+							`All Year: **${year_count}**`)
 				.setFooter("💦")
 				.setTimestamp();
 
