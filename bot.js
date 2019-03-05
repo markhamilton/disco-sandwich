@@ -48,6 +48,54 @@ const client = new Discord.Client();
 // 	});
 // }
 
+function nutAdd(message) {
+	var stmt = db.prepare("INSERT INTO nutted VALUES (?,?)");
+	stmt.run(message.author.id,+new Date());
+	message.channel.send("Nice work. Type `!nut stats` for more info.");
+}
+
+function nutStats(message) {
+	db.all("SELECT * FROM nutted WHERE user=?", [message.author.id], (err, rows) => {
+		if(rows && rows.length > 0) {
+
+			var total_count = 0, day_count = 0, month_count = 0, year_count = 0;
+
+			var now = new Date();
+			var since_day = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+			var since_month = new Date(now.getFullYear(), now.getMonth(), 0);
+			var since_year = new Date(now.getFullYear(), 0, 0);
+
+			rows.forEach((row) => {
+				total_count++;
+
+				var row_date = new Date(row.timestamp);
+				if(row_date > since_year) year_count++;
+				if(row_date > since_month) month_count++;
+				if(row_date > since_day) day_count++;
+			});
+
+			const embed = new Discord.RichEmbed()
+				.setTitle("Nut Count")
+				.setDescription(`You have nut **${total_count}** times total.`)
+				.setColor(0xFFFFFF)
+				.addField("Detailed Stats",
+							`Today: **${day_count}**\n`+
+							`Current month: **${month_count}**\n`+
+							`Current year: **${year_count}**`)
+				.setFooter("💦")
+				.setTimestamp();
+
+			message.channel.send({embed});
+		} else {
+			message.channel.send("You have never nutted. Use `!nutted` track your score.");
+		}
+	});
+}
+
+function nutHelp(message) {
+	message.channel.send("Type `!nutted` to add a new nut or `!nutstats` to see how many nuts you have.");
+}
+
 function deleteWord(message, word) {
 	word.replace(/\s+/g, " ").trim();
 
@@ -261,6 +309,27 @@ client.on('message', (message) => {
 				makeSandwich(message);
 				break;
 		}
+		break;
+	case "nut":
+		switch(args[0]) {
+			case "add":
+				nutAdd(message);
+				break;
+			case "stats":
+				nutStats(message);
+				break;
+			case "help":
+			default:
+				nutHelp(message);
+				break;
+		}
+		break;
+	case "nutted":
+		nutAdd(message);
+		break;
+	case "ns":
+	case "nutstats":
+		nutStats(message);
 		break;
 	case "s2d":
 		invokeSandwicher(message);
