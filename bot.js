@@ -48,6 +48,72 @@ const client = new Discord.Client();
 // 	});
 // }
 
+function addPin(message, user) {
+	// bots can't pin. users can't pin embeds
+	if(user.bot) return;
+	if(message.type != "DEFAULT") return;
+	if(message.embeds.length !== 0)  {
+		console.log("pinning embeds not supported yet");
+		return;
+	}
+	if(message.attachments.length !== 0 && !message.content) {
+		console.log("pinning messages with attachments and no message not supported yet");
+		return;
+	}
+
+    // check if this message has already been pinned
+	db.get("select * from pinned WHERE messageid=? and guildid=?", [message.id, message.guild.id], (err, row) => {
+
+		if( typeof row === 'undefined' ) {
+			console.log(`${user.username} is pinning "<${message.author.username}> ${message.content}"`);
+			var stmt = db.prepare("INSERT INTO pinned VALUES (?, ?, ?, ?, ?, ?, ?)");
+			stmt.run(message.author.id, message.author.username, message.id, message.content, message.createdTimestamp, message.guild.id, user.id);
+			message.react("📌");
+		} else {
+			console.log(`duplicate pin: "<${message.author.username}> ${message.content}"`);
+		}
+	});
+}
+
+function deletePin(message, user) {
+	if(user.bot) return;
+	if(message.type != "DEFAULT") return;
+
+	db.get("select * from pinned WHERE messageid=? and guildid=? and pinnerid=?", [message.id, message.guild.id, user.id], (err, row) => {
+		if( typeof row !== 'undefined' ) {
+			var stmt = db.prepare("DELETE FROM pinned WHERE messageid=? AND guildid=?");
+			stmt.run(message.id, message.guild.id);
+			console.log(`${user.username} unpinned "<${message.author.username}> ${message.content}"`);
+			message.reactions.forEach((reaction) => {
+				if(reaction && reaction.me && reaction.emoji == "📌") reaction.remove();
+			});
+		} else {
+			console.log(`${user.username} permfailed to unpin "<${message.author.username}> ${message.content}"`);
+		}
+	});
+}
+
+function randomPin(message) {
+	db.get("select * from pinned WHERE guildid=? order by RANDOM() limit 1", [message.guild.id], (err, row) => {
+		if( typeof row !== 'undefined' ) {
+			const embed = new Discord.RichEmbed()
+				.setTitle("Random Pin")
+				.setDescription(`**<${row.authorusername}>**\n${row.messagecontent}`)
+				.setColor(0xb2ddff)
+				.setFooter("📌")
+				.setTimestamp(row.messagetimestamp);
+			message.channel.send(embed);
+		} else {
+			console.log("No random pins");
+			message.channel.send("Use the 📌 react on a message to pin it.");
+		}
+	});
+}
+
+function listAllPins(message) {
+
+}
+
 function nutAdd(message) {
 	var stmt = db.prepare("INSERT INTO nutted VALUES (?,?)");
 	stmt.run(message.author.id,+new Date());
@@ -287,6 +353,50 @@ client.on('ready', function(evt) {
 	client.user.setActivity('!sandwich help', {type:"LISTENING"});
 });
 
+client.on('messageReactionAdd', (reaction, user) => {
+	if(user.bot) return;
+	
+    if(reaction.emoji.name === "📌") {
+        addPin(reaction.message, user);
+    }
+});
+
+
+client.on('messageReactionRemove', (reaction, user) => {
+	if(user.bot) return;
+
+    if(reaction.emoji.name === "📌") {
+        deletePin(reaction.message, user);
+    }
+});
+
+
+// enable raw mode for message reactions
+client.on('raw', packet => {
+    // We don't want this to run on unrelated packets
+    if (!['MESSAGE_REACTION_ADD', 'MESSAGE_REACTION_REMOVE'].includes(packet.t)) return;
+    // Grab the channel to check the message from
+    const channel = client.channels.get(packet.d.channel_id);
+    // There's no need to emit if the message is cached, because the event will fire anyway for that
+    if (channel.messages.has(packet.d.message_id)) return;
+    // Since we have confirmed the message is not cached, let's fetch it
+    channel.fetchMessage(packet.d.message_id).then(message => {
+        // Emojis can have identifiers of name:id format, so we have to account for that case as well
+        const emoji = packet.d.emoji.id ? `${packet.d.emoji.name}:${packet.d.emoji.id}` : packet.d.emoji.name;
+        // This gives us the reaction we need to emit the event properly, in top of the message object
+        const reaction = message.reactions.get(emoji);
+        // Adds the currently reacting user to the reaction's users collection.
+        if (reaction) reaction.users.set(packet.d.user_id, client.users.get(packet.d.user_id));
+        // Check which type of event it is before emitting
+        if (packet.t === 'MESSAGE_REACTION_ADD') {
+            client.emit('messageReactionAdd', reaction, client.users.get(packet.d.user_id));
+        }
+        if (packet.t === 'MESSAGE_REACTION_REMOVE') {
+            client.emit('messageReactionRemove', reaction, client.users.get(packet.d.user_id));
+        }
+    });
+});
+
 client.on('message', (message) => {
 	if(!message.content.startsWith('!')) return;
 
@@ -331,6 +441,21 @@ client.on('message', (message) => {
 	case "nutstats":
 		nutStats(message);
 		break;
+
+	case "pr":
+		randomPin(message);
+		break;
+	case "pin":
+		switch(args[0]) {
+			case "random":
+				randomPin(message);
+				break;
+			default:
+				pinHelp(message);
+				break;
+		}
+		break;
+
 	case "s2d":
 		invokeSandwicher(message);
 		break;
