@@ -26,27 +26,46 @@ var meats = require("./data/meats.json");
 
 const client = new Discord.Client();
 
-// TODO: Implement pagination later
-// var current_paginate = {
-// 	channelID : 0,
-// 	pages : [],
-// 	timestamp : 0,
-// 	cur_page : 0
-// };
-// function autoPaginate(channelID, pages) {
-// 	current_paginate = {
-// 		channelID : channelID,
-// 		pages : pages,
-// 		timestamp : +new Date(),
-// 		cur_page : 0
-// 	}
+var current_paginates = [];
+function autoPaginate(message, pages) {
+	// message is the source message that triggered it 
+	// pages is array of embeds/messages in page order
 
-// 	// post the first message
-// 	client.sendMessage({
-// 		to: paginatedata['channelID'],
-// 		embed: embedcontent
-// 	});
-// }
+	message.channel.send(pages[0]).then((newmsg) => {
+		console.log("polling", newmsg.id);
+
+		current_paginates[newmsg.id] = {
+			pages : pages,
+			message : newmsg,
+			cur_page : 0
+		}
+
+		newmsg.react('👈').then(() => newmsg.react('👉'));
+		const filter = (reaction, user) => { return ['👈', '👉'].includes(reaction.emoji.name) && !user.bot; };
+		
+		
+		newmsg.createReactionCollector(filter, { time: 30000 }).on('collect', (reaction) => {			
+
+			if (reaction.emoji.name === '👈') {
+				current_paginates[newmsg.id].cur_page--;
+				if(current_paginates[newmsg.id].cur_page < 0) current_paginates[newmsg.id].cur_page = current_paginates[newmsg.id].pages.length - 1;
+			} else {
+				current_paginates[newmsg.id].cur_page = (current_paginates[newmsg.id].cur_page + 1) % current_paginates[newmsg.id].pages.length;
+			}
+			newmsg.edit(current_paginates[newmsg.id].pages[current_paginates[newmsg.id].cur_page]);
+		}).on('end', collected => {
+			current_paginates.splice(newmsg.id, 1);
+			newmsg.reactions.forEach((reaction) => {
+				if(reaction && reaction.me && (reaction.emoji == '👈' || reaction.emoji == '👉')) reaction.remove();
+			});
+			console.log("done polling", newmsg.id);
+		});
+
+	});
+}
+
+// roll=(dice)=>{var ds=dice.split('d');return ds.length!=2?[]:Array.apply(null,Array(Math.min(100,Math.max(1,isNaN(parseInt(ds[0],10))?1:parseInt(ds[0],10))))).map((x,i)=>{return Math.floor(Math.random()*parseInt(ds[1],10))});};
+// console.log(roll("d20"));
 
 function addPin(message, user) {
 	// bots can't pin. users can't pin embeds
@@ -105,13 +124,48 @@ function randomPin(message) {
 			message.channel.send(embed);
 		} else {
 			console.log("No random pins");
-			message.channel.send("Use the 📌 react on a message to pin it.");
+			message.channel.send("No pins yet! Use the 📌 react on a message to pin it.");
 		}
 	});
 }
 
 function listAllPins(message) {
+	db.all("select * from pinned WHERE guildid=? order by messagetimestamp DESC", [message.guild.id], (err, rows) => {
+		// Fix this later. This is a stupid state machine
+		if(rows && rows.length > 0) {
+			var pageindex = 0;
+			var pages = [];
+			var quotecount = 0;
 
+			var embed;
+
+			rows.forEach((row) => {
+				quotecount++;
+				if(quotecount == 1) {
+					embed = new Discord.RichEmbed()
+						.setTitle("All Pins")
+						.setDescription(`page ${pageindex+1}`)
+						.setColor(0xb2ddff);
+				}
+				if(quotecount == 4) {
+					embed.setFooter("📌");
+					pages.push(embed);
+					pageindex++;
+					quotecount = 0;
+				}
+				embed.addField(`<${row.authorusername}>`, `${row.messagecontent}`);
+			});
+			if(quotecount > 0) {
+				embed.setFooter("📌");
+				pages.push(embed);
+				quotecount = 0;
+			}
+			autoPaginate(message, pages);
+		} else {
+			console.log("No pins to list");
+			message.channel.send("No pins yet! Use the 📌 react on a message to pin it.");
+		}
+	});
 }
 
 function nutAdd(message) {
@@ -339,6 +393,10 @@ function giveHelp(message) {
 			"`!addword [word]` — Add a new word to the list. It must be unique!\n" +
 			"`!deleteword [word]` — Delete a word from the list. You can only delete a word you've added.\n" + 
 			"`!randomword` — Randomly select a word from the list.")
+		.addField("Virtual Pinning",
+			"React to a message with the 📌 emoji to bypass Discord's 50 pin limit.\n" +
+			"`!pin random` - Show random pin.\n" +
+			"`!pin list` - Show all pins, click the right and left buttons to cycle through pages.")
 		.setFooter("🥪")
 		.setTimestamp();
 
@@ -355,7 +413,7 @@ client.on('ready', function(evt) {
 
 client.on('messageReactionAdd', (reaction, user) => {
 	if(user.bot) return;
-	
+
     if(reaction.emoji.name === "📌") {
         addPin(reaction.message, user);
     }
@@ -434,6 +492,18 @@ client.on('message', (message) => {
 				break;
 		}
 		break;
+	// case "testpaginate":
+	// 	autoPaginate(message,
+	// 		[
+	// 			new Discord.RichEmbed()
+	// 				.setTitle("Test Page 1")
+	// 				.setColor(0x800080),
+	// 			new Discord.RichEmbed()
+	// 				.setTitle("Test Page 2")
+	// 				.setColor(0xFFFFFF),
+	// 		]
+	// 	);
+	// 	break;
 	case "nutted":
 		nutAdd(message);
 		break;
@@ -441,12 +511,14 @@ client.on('message', (message) => {
 	case "nutstats":
 		nutStats(message);
 		break;
-
 	case "pr":
 		randomPin(message);
 		break;
 	case "pin":
 		switch(args[0]) {
+			case "list":
+				listAllPins(message);
+				break;
 			case "random":
 				randomPin(message);
 				break;
