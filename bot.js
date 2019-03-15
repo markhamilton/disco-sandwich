@@ -492,18 +492,6 @@ client.on('message', (message) => {
 				break;
 		}
 		break;
-	// case "testpaginate":
-	// 	autoPaginate(message,
-	// 		[
-	// 			new Discord.RichEmbed()
-	// 				.setTitle("Test Page 1")
-	// 				.setColor(0x800080),
-	// 			new Discord.RichEmbed()
-	// 				.setTitle("Test Page 2")
-	// 				.setColor(0xFFFFFF),
-	// 		]
-	// 	);
-	// 	break;
 	case "nutted":
 		nutAdd(message);
 		break;
