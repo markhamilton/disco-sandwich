@@ -10,7 +10,7 @@ class PostFX {
     }
     
     addEffect(effect) {
-        this._effects.push(effect);
+        this.__effects.push(effect);
     }
     
     render(ctx) {
