@@ -67,6 +67,8 @@ function autoPaginate(message, pages) {
 // roll=(dice)=>{var ds=dice.split('d');return ds.length!=2?[]:Array.apply(null,Array(Math.min(100,Math.max(1,isNaN(parseInt(ds[0],10))?1:parseInt(ds[0],10))))).map((x,i)=>{return Math.floor(Math.random()*parseInt(ds[1],10))});};
 // console.log(roll("d20"));
 
+// pinning
+
 function addPin(message, user) {
 	// bots can't pin. users can't pin embeds
 	if(user.bot) return;
@@ -168,9 +170,19 @@ function listAllPins(message) {
 	});
 }
 
+// nutting
+function nutMessage(message, user) {
+	if(user.bot) return;
+
+	console.log(`${user.username} is nutting to "<${message.author.username}> ${message.content}"`);
+	var stmt = db.prepare("INSERT INTO nutted VALUES (?,?,?)");
+	stmt.run(user.id,+new Date(),message.author.id);
+	message.react("💦");
+}
+
 function nutAdd(message) {
-	var stmt = db.prepare("INSERT INTO nutted VALUES (?,?)");
-	stmt.run(message.author.id,+new Date());
+	var stmt = db.prepare("INSERT INTO nutted VALUES (?,?,?)");
+	stmt.run(message.author.id,+new Date(), null);
 	message.react("💦");
 }
 
@@ -184,6 +196,7 @@ function nutStats(message) {
 			var since_day = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 			var since_month = new Date(now.getFullYear(), now.getMonth(), 0);
 			var since_year = new Date(now.getFullYear(), 0, 0);
+			var users = {};
 
 			rows.forEach((row) => {
 				total_count++;
@@ -192,7 +205,39 @@ function nutStats(message) {
 				if(row_date > since_year) year_count++;
 				if(row_date > since_month) month_count++;
 				if(row_date > since_day) day_count++;
+				
+				users[row.targetuser] = users[row.targetuser] + 1 || 0;
 			});
+
+			var sortedusers = [];
+			for ( var user in users ) {
+				sortedusers.push([user, users[user]]);
+			}
+			sortedusers.sort((a,b) => {
+				return a[1] - b[1];
+			});
+
+			var favorite_target;
+			if( sortedusers.length == 1 && sortedusers[0][0] == 'null' ) {
+				const messages = [
+					"This was purely a solo project",
+					"You nut alone",
+					"React with 💦 to nut to another user's message",
+				];
+				
+				favorite_target = messages[Math.floor(Math.random() * messages.length)];
+			} else {
+				const messages = [
+					"You are fond of $",
+					"$ seems to strike your fancy",
+					"You've spilled the most seed for $",
+					"Are you married to $?",
+					"You just loved blasting rope to $"
+				];
+
+				var target_username = '<@' + ( sortedusers[0][0] != 'null' ? sortedusers[0][0] : sortedusers[1][0] )  + '>';
+				favorite_target = messages[Math.floor(Math.random() * messages.length)].replace("$", target_username);
+			}
 
 			const embed = new Discord.RichEmbed()
 				.setTitle("Nut Statistics")
@@ -202,6 +247,7 @@ function nutStats(message) {
 							`Today: **${day_count}**\n`+
 							`Monthly: **${month_count}**\n`+
 							`All Year: **${year_count}**`)
+				.addField("Friends", favorite_target)
 				.setFooter("💦")
 				.setTimestamp();
 
@@ -414,9 +460,14 @@ client.on('ready', function(evt) {
 client.on('messageReactionAdd', (reaction, user) => {
 	if(user.bot) return;
 
-    if(reaction.emoji.name === "📌") {
-        addPin(reaction.message, user);
-    }
+	switch(reaction.emoji.name) {
+ 		case "📌":
+			addPin(reaction.message, user);
+			break;
+		case "💦":
+			nutMessage(reaction.message, user);
+			break;
+	}
 });
 
 
