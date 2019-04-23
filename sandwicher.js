@@ -15,6 +15,8 @@ const toppings  = sandwicher_meta['toppings'];
 const meats     = sandwicher_meta['meats'];
 
 
+// "I imagine the suffering gears as we wait for the devil sandwich to appear"
+
 function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
     if (typeof stroke == 'undefined') {
         stroke = true;
