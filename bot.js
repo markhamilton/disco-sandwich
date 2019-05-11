@@ -26,6 +26,8 @@ var meats = require("./data/meats.json");
 
 const client = new Discord.Client();
 
+const random_thing = function (thing) { return thing[Math.floor(Math.random() * thing.length)]; }
+
 var current_paginates = [];
 function autoPaginate(message, pages) {
 	// message is the source message that triggered it 
@@ -366,6 +368,46 @@ function myWords(message) {
 	});
 }
 
+function scrabbler(message) {
+	const pieces = [
+		"<:a_:576632382539431938>",
+		"<:b_:576632383013519364>",
+		"<:c_:576632382975770655>",
+		"<:d_:576632383240142858>",
+		"<:e_:576632383135023115>",
+		"<:f_:576632383256657921>",
+		"<:g_:576632383722225676>",
+		"<:h_:576632383600853004>",
+		"<:i_:576632383902580736>",
+		"<:j_:576632384049512458>",
+		"<:k_:576632384057901066>",
+		"<:l_:576632384112558080>",
+		"<:m_:576632384108363776>",
+		"<:n_:576632384028409866>",
+		"<:o_:576632384066420746>",
+		"<:p_:576632383999311912>",
+		"<:q_:576632384104038401>",
+		"<:r_:576632383726419989>",
+		"<:s_:576632384116752384>",
+		"<:t_:576632383755780108>",
+		"<:u_:576632384078741510>",
+		"<:v_:576632383890128909>",
+		"<:w_:576632383827345423>",
+		"<:x_:576632384296845312>",
+		"<:y_:576632384041123861>",
+		"<:z_:576632384112558090>",
+		"<:blank:576632382912856084>",
+	];
+
+	var pieces_msg = "";
+
+
+	for (var i = 0; i < 7; ++i) pieces_msg += random_thing(pieces);
+	// for (var i = 0; i < 27; ++i) pieces_msg += pieces[i];
+
+	message.channel.send(message.author + ":\n" + pieces_msg);
+}
+
 function invokeSandwicher(message) {
 	const holdplease = [
 		"Please hang tight while I whip you up a mean sandwich!",
@@ -393,8 +435,6 @@ function invokeSandwicher(message) {
 function makeSandwich(message) {
 	var keys = Object.keys(meta);
 	var s_meta = meta[keys[Math.floor(keys.length * Math.random())]];
-
-	var random_thing = function( thing ) { return thing[Math.floor(Math.random() * thing.length)]; }
 
 	var s_bread = random_thing( breads );
 	var s_topping = random_thing( toppings );
@@ -443,6 +483,9 @@ function giveHelp(message) {
 			"React to a message with the 📌 emoji to bypass Discord's 50 pin limit.\n" +
 			"`!pin random` - Show random pin.\n" +
 			"`!pin list` - Show all pins, click the right and left buttons to cycle through pages.")
+		.addField("Feature Bloat",
+			"`!scrabble` - Get 7 random tiles.\n" +
+			"Ask: `should I ________ or ________` to make a hard decision easier.")
 		.setFooter("🥪")
 		.setTimestamp();
 
@@ -507,7 +550,19 @@ client.on('raw', packet => {
 });
 
 client.on('message', (message) => {
-	if(!message.content.startsWith('!')) return;
+	if(!message.content.startsWith('!')) {
+		// conversational/non switch board interaction
+		var re = /(should i )(.*)( or )(.*)/gmi;
+		var m = re.exec(message.content);
+
+		if (m) {
+			var choices = [ m[2], m[4] ];
+			message.channel.send(message.author + ", you should " + random_thing(choices).trim());
+		}
+
+
+		return;
+	}
 
 	var args = message.content.substring(1).split(' ');
 	var cmd = args[0];
@@ -528,6 +583,9 @@ client.on('message', (message) => {
 				makeSandwich(message);
 				break;
 		}
+		break;
+	case "scrabble":
+		scrabbler(message);
 		break;
 	case "nut":
 		switch(args[0]) {
