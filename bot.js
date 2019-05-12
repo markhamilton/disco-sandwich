@@ -216,7 +216,7 @@ function nutStats(message) {
 				sortedusers.push([user, users[user]]);
 			}
 			sortedusers.sort((a,b) => {
-				return a[1] - b[1];
+				return b[1] - a[1];
 			});
 
 			var favorite_target;
