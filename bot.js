@@ -15,6 +15,8 @@ logger.remove(logger.transports.Console);
 logger.add(new logger.transports.Console, {colorize:true});
 logger.level = 'debug';
 
+const scrabble_pieces = require("./data/scrabble_pieces.json");
+
 // structure
 var meta = require("./data/meta.json"); 
 
@@ -368,41 +370,24 @@ function myWords(message) {
 	});
 }
 
-function scrabbler(message) {
-	const pieces = [
-		"<:a_:576632382539431938>",
-		"<:b_:576632383013519364>",
-		"<:c_:576632382975770655>",
-		"<:d_:576632383240142858>",
-		"<:e_:576632383135023115>",
-		"<:f_:576632383256657921>",
-		"<:g_:576632383722225676>",
-		"<:h_:576632383600853004>",
-		"<:i_:576632383902580736>",
-		"<:j_:576632384049512458>",
-		"<:k_:576632384057901066>",
-		"<:l_:576632384112558080>",
-		"<:m_:576632384108363776>",
-		"<:n_:576632384028409866>",
-		"<:o_:576632384066420746>",
-		"<:p_:576632383999311912>",
-		"<:q_:576632384104038401>",
-		"<:r_:576632383726419989>",
-		"<:s_:576632384116752384>",
-		"<:t_:576632383755780108>",
-		"<:u_:576632384078741510>",
-		"<:v_:576632383890128909>",
-		"<:w_:576632383827345423>",
-		"<:x_:576632384296845312>",
-		"<:y_:576632384041123861>",
-		"<:z_:576632384112558090>",
-		"<:blank:576632382912856084>",
-	];
+function scrabble_say(message, text) {
+	var pieces = text.toLowerCase().split('').map( (c) => {
+		var start = 'a'.charCodeAt(0);
+		var end = 'z'.charCodeAt(0);
+		var cur = c.charCodeAt(0);
 
+		if(cur >= start && cur <= end)
+			return scrabble_pieces[cur - start];
+		else return scrabble_pieces[26];
+	}).join('');
+
+	message.channel.send(pieces);
+}
+
+function scrabbler(message) {
 	var pieces_msg = "";
 
-
-	for (var i = 0; i < 7; ++i) pieces_msg += random_thing(pieces);
+	for (var i = 0; i < 7; ++i) pieces_msg += random_thing(scrabble_pieces);
 	// for (var i = 0; i < 27; ++i) pieces_msg += pieces[i];
 
 	message.channel.send(message.author + ":\n" + pieces_msg);
@@ -485,6 +470,7 @@ function giveHelp(message) {
 			"`!pin list` - Show all pins, click the right and left buttons to cycle through pages.")
 		.addField("Feature Bloat",
 			"`!scrabble` - Get 7 random tiles.\n" +
+			"`!scrabble say *words*` - Say some stuff with word tiles.\n" +
 			"Ask: `should I ________ or ________` to make a hard decision easier.")
 		.setFooter("🥪")
 		.setTimestamp();
@@ -585,7 +571,18 @@ client.on('message', (message) => {
 		}
 		break;
 	case "scrabble":
-		scrabbler(message);
+		switch (args[0]) {
+			case "say":
+				var text_say = args.splice(1).join(' ').trim();
+				if(text_say.length > 0)
+					scrabble_say(message, text_say);
+				else 
+					message.channel.send("Type `scrabble say *words*` to type something using word tiles.");
+				break;
+			default:
+				scrabbler(message);
+				break;
+		}
 		break;
 	case "nut":
 		switch(args[0]) {
