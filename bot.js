@@ -4,6 +4,7 @@ const Discord = require("discord.js");
 const logger = require('winston');
 const auth = require('./auth.json');
 const fs = require('fs');
+const https = require('https');
 
 var workerpool = require('workerpool');
 var pool = workerpool.pool('./sandwicher.js');
@@ -98,6 +99,39 @@ function addPin(message, user) {
 			console.log(`duplicate pin: "<${message.author.username}> ${message.content}"`);
 		}
 	});
+}
+
+function mineStats(message) {
+    https.get('https://mcapi.us/server/status?ip=' + auth.mc_server + '&port=25565', (resp) => {
+        let data = '';
+
+        resp.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        resp.on('end', () => {
+            var mc_status = JSON.parse(data);
+            console.log(mc_status);
+
+            var mc_online = mc_status.online ? "Online" : "Offline";
+            //var mc_motd =
+            var mc_players = mc_status.players.now + "/" + mc_status.players.max;
+
+            const embed = new Discord.RichEmbed()
+                .setTitle("Minecraft Server Status: " + auth.mc_server)
+                .setDescription(`Status: **${mc_online}**`)
+                .setColor(mc_status.online ? 0x00ff00 : 0xff0000)
+                .addField("Details",
+                    `Players: **${mc_players}** online now \n` +
+                    `Server: **v${mc_status.server.name}**`)
+                .setTimestamp(mc_status.last_updated)
+                .setFooter("⚡️");
+            message.channel.send(embed);
+        });
+    }).on("error", (err) => {
+        console.log("error getting mc server status: " + err.message);
+    });
+
 }
 
 function deletePin(message, user) {
@@ -471,6 +505,7 @@ function giveHelp(message) {
 		.addField("Feature Bloat",
 			"`!scrabble` - Get 7 random tiles.\n" +
 			"`!scrabble say *words*` - Say some stuff with word tiles.\n" +
+            "`!ms` - Minecraft Server Status\n" +
 			"Ask: `should I ________ or ________` to make a hard decision easier.")
 		.setFooter("🥪")
 		.setTimestamp();
@@ -605,6 +640,9 @@ client.on('message', (message) => {
 	case "nutstats":
 		nutStats(message);
 		break;
+    case "ms":
+        mineStats(message);
+        break;
 	case "pr":
 		randomPin(message);
 		break;
