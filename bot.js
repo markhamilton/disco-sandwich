@@ -27,6 +27,8 @@ var toppings = require("./data/toppings.json");
 var cheeses = require("./data/cheeses.json");
 var meats = require("./data/meats.json");
 
+const magick = require('./magick.js');
+
 const client = new Discord.Client();
 
 const random_thing = function (thing) { return thing[Math.floor(Math.random() * thing.length)]; }
@@ -505,6 +507,7 @@ function giveHelp(message) {
 		.addField("Feature Bloat",
 			"`!scrabble` - Get 7 random tiles.\n" +
 			"`!scrabble say *words*` - Say some stuff with word tiles.\n" +
+            "`!magick` - Generate a magickal effect.\n" +
             "`!ms` - Minecraft Server Status\n" +
 			"Ask: `should I ________ or ________` to make a hard decision easier.")
 		.setFooter("🥪")
@@ -639,6 +642,10 @@ client.on('message', (message) => {
 	case "ns":
 	case "nutstats":
 		nutStats(message);
+		break;
+	case "magick":
+	case "m":
+		message.channel.send( message.author + ", " + magick.magickEffect() );
 		break;
     case "ms":
         mineStats(message);
